@@ -10,7 +10,7 @@ import org.newdawn.slick.geom.Rectangle;
 
 public class SmallBoard {
 	Image image, overlay;
-	int x, y, placement;
+	int x, y, placement, player;
 	boolean selected;
 	
 	ArrayList<Square> squares = new ArrayList<Square>();
@@ -78,8 +78,13 @@ public class SmallBoard {
 			overlay.draw(x, y);
 	}
 	
-	public void setOverlay(boolean e) throws SlickException {
-		overlay = e ? new Image("data/bigx.png") : null;
+	public void setOverlay(boolean e, int p) throws SlickException {
+		if (e) {
+			overlay = (p == 0) ? new Image("data/bigx.png") : new Image("data/bigo.png");
+			player = p;
+		}
+		else
+			overlay = null;
 	}
 	
 	public boolean isSelected() {
@@ -88,5 +93,27 @@ public class SmallBoard {
 
 	public boolean isOverlay() {
 		return (overlay == null) ? false : true;
+	}
+	
+	public void reinitialize() throws SlickException {
+		selected = false;
+		overlay = null;
+		image  = (selected) ? new Image("data/greensmallboard.png") : new Image("data/smallboard.png");
+		
+		for (Square square : squares) {
+			square.reinitialize();
+		}
+	}
+	
+	public int getPlayer() {
+		return player;
+	}
+	
+	public boolean isFilled() {
+		for (Square square : squares) {
+			if (!square.isMarked())
+				return false;
+		}
+		return true;
 	}
 }

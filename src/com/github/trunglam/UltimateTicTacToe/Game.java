@@ -19,6 +19,9 @@ public class Game extends BasicGame{
 	Image bigboard;
 	SmallBoard smallboards[] = new SmallBoard[9];
 	
+	boolean win, able;
+	int player;
+	
 	MouseBlock mb;
 	public Game() {
 		super("Ultimate TicTacToe");
@@ -50,6 +53,9 @@ public class Game extends BasicGame{
 			}
 		}
 		mb = new MouseBlock();
+		win = false;
+		player = 0;
+		able = true;
 	}
 
 	@Override
@@ -57,8 +63,20 @@ public class Game extends BasicGame{
 		Input input = arg0.getInput();
 		
 		mb.setXY(Mouse.getX(), Mouse.getY(), screenHeight);
-		if (input.isMousePressed(0) && input.isKeyDown(Input.KEY_A)) {
+		
+		
 			
+		if (input.isKeyPressed(Input.KEY_SPACE)) {
+			for (SmallBoard board : smallboards) {
+				board.reinitialize();
+			}
+			win = false;
+			able = true;
+		}
+			
+		
+		
+		else if (input.isMousePressed(0) && input.isKeyDown(Input.KEY_A) && able && !win) {
 			SmallBoard currBoard = null;
 			
 			int multipleCollisions = 0;
@@ -73,18 +91,20 @@ public class Game extends BasicGame{
 			}
 			
 			if (multipleCollisions == 1) {
-				if (!currBoard.isOverlay()) {
+				if (!currBoard.isOverlay() && !currBoard.isFilled()) {
 					for (SmallBoard board : smallboards) {
 						board.setSelect(false);
 					}
 					boolean value = currBoard.isSelected() ? false : true;
 					currBoard.setSelect(value);
+					able = false;
 				}
 			}
 		}
 		
-		else if (input.isMousePressed(1)) {
+		else if (input.isMousePressed(1) && !win) {
 			SmallBoard newBoard = null;
+			boolean placed = false;
 			
 			for (SmallBoard board : smallboards) {
 				if (board.getRect().intersects(mb.getRect()) && board.isSelected()) {
@@ -101,16 +121,18 @@ public class Game extends BasicGame{
 					}
 					
 					if (multipleCollisions == 1) {
-						boolean value = currSquare.isMarked() ? false : true;
-						currSquare.setMark(value);
-						newBoard = smallboards[currSquare.getPlacement()];
-						
-						if (checkSquares(board.getSquares())) {
-							board.setOverlay(true);
-							if (checkBoards(smallboards)) {
-								System.out.println("lol");
-							}
+						if (!currSquare.isMarked()) {
+							currSquare.setMark(true, player);
+							placed = true;
+							newBoard = smallboards[currSquare.getPlacement()];
+							if (checkSquares(board.getSquares())) {
+								board.setOverlay(true, player);
+								if (checkBoards(smallboards)) {
+									System.out.println("lol");
+									win = true;
+								}
 								
+							}
 						}
 						break;
 					}
@@ -121,9 +143,14 @@ public class Game extends BasicGame{
 				for (SmallBoard board : smallboards) {
 					board.setSelect(false);
 				}
-				if (!newBoard.isOverlay())
+				if (!newBoard.isOverlay() && !newBoard.isFilled())
 					newBoard.setSelect(true);
+				else
+					able = true;
 			}
+			
+			if (placed)
+				player = (player == 0) ? 1 : 0;
 		}
 		
 		
@@ -141,7 +168,7 @@ public class Game extends BasicGame{
 		//check vertically
 		for (int x = 0; x < 3; x++) {
 			for (int y = 0; y < 3; y++) {
-				if (squares[x][y].isMarked()) {
+				if (squares[x][y].isMarked() && squares[x][y].getPlayer() == player) {
 					counter++;
 				}
 			}
@@ -152,7 +179,7 @@ public class Game extends BasicGame{
 		//checks horizontally
 		for (int x = 0; x < 3; x++) {
 			for (int y = 0; y < 3; y++) {
-				if (squares[y][x].isMarked()) {
+				if (squares[y][x].isMarked() && squares[y][x].getPlayer() == player) {
 					counter++;
 				}
 			}
@@ -162,7 +189,7 @@ public class Game extends BasicGame{
 		}
 		//checks diagonally
 		for (int x = 0; x < 3; x++) {
-			if (squares[x][x].isMarked()) {
+			if (squares[x][x].isMarked() && squares[x][x].getPlayer() == player) {
 				counter++;
 			}
 		}
@@ -172,7 +199,7 @@ public class Game extends BasicGame{
 		
 		//checks the other diagonal
 		for (int x = 0, y = 2; x < 3; x++, y--) {
-			if (squares[x][y].isMarked()) {
+			if (squares[x][y].isMarked() && squares[x][y].getPlayer() == player) {
 				counter++;
 			}
 		}
@@ -194,14 +221,45 @@ public class Game extends BasicGame{
 		//checks vertically
 		for (int x = 0; x < 3; x++) {
 			for (int y = 0; y < 3; y++) {
-				if (smallboards[x][y].isOverlay()) {
+				if (smallboards[x][y].isOverlay() && smallboards[x][y].getPlayer() == player) {
 					counter++;
 				}
 			}
-			if (counter == 3) 
+			if (counter == 3)
 				return true;
 			counter = 0;
 		}
+		
+		//checks horizontally
+		for (int x = 0; x < 3; x++) {
+			for (int y = 0; y < 3; y++) {
+				if (smallboards[y][x].isOverlay() && smallboards[y][x].getPlayer() == player) {
+					counter++;
+				}
+			}
+			if (counter == 3)
+				return true;
+			counter = 0;
+		}
+		
+		//check diagonally
+		for (int x = 0; x < 3; x++) {
+			if (smallboards[x][x].isOverlay() && smallboards[x][x].getPlayer() == player) {
+				counter++;
+			}
+		}
+		if (counter == 3)
+			return true;
+		counter = 0;
+		
+		//checks other diagonal
+		for (int x = 0, y = 2; x < 3; x++, y--) {
+			if (smallboards[x][y].isOverlay() && smallboards[x][y].getPlayer() == player) {
+				counter++;
+			}
+		}
+		if (counter == 3)
+			return true;
 		return false;
 	}
 	
